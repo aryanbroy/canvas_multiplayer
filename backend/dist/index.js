@@ -83,6 +83,34 @@ wss.on("connection", function connection(ws) {
                 }
             }
         }
+        // clear canvas
+        if (message.type === shared_config_1.default.WS_DRAW.CLEAR) {
+            const clientId = message.clientId;
+            const roomId = message.roomId;
+            const room = rooms[roomId];
+            const remoteClientPayload = {
+                type: shared_config_1.default.WS_DRAW.CLEAR,
+                clientId,
+                room,
+                isRemote: true,
+            };
+            const localClientPayload = {
+                type: shared_config_1.default.WS_DRAW.CLEAR,
+                clientId,
+                room,
+                isRemote: false,
+            };
+            for (const inRoomClientId of room.clients) {
+                if (inRoomClientId !== clientId) {
+                    const con = clients[inRoomClientId].connection;
+                    con.send(JSON.stringify(remoteClientPayload));
+                }
+                else {
+                    const con = clients[inRoomClientId].connection;
+                    con.send(JSON.stringify(localClientPayload));
+                }
+            }
+        }
     });
     const clientId = guid();
     clients[clientId] = {
@@ -94,6 +122,7 @@ wss.on("connection", function connection(ws) {
     };
     ws.send(JSON.stringify(payload));
 });
+// generate random string to be used as room or client id
 const guid = () => {
     const s4 = () => Math.floor((1 + Math.random()) * 0x10000)
         .toString(16)

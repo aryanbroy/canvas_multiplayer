@@ -10,6 +10,7 @@ const sharedConfig = {
     BEGIN_DRAW: "begin_draw",
     UPDATE_DRAW: "update_draw",
     END_DRAW: "end_draw",
+    CLEAR: "clear",
   },
 };
 

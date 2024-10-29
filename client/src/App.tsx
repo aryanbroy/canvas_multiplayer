@@ -72,6 +72,20 @@ function App() {
     [clientId, roomId, isPressed, socket]
   );
 
+  const clearCanvas = () => {
+    if (!contextRef.current || !socket) {
+      return;
+    }
+    contextRef.current.clearRect(0, 0, 800, 800);
+
+    const payload = {
+      type: config.WS_DRAW.CLEAR,
+      clientId,
+      roomId,
+    };
+    socket.send(JSON.stringify(payload));
+  };
+
   useEffect(() => {
     if (!socket) {
       return;
@@ -103,19 +117,21 @@ function App() {
           updateDraw(message.mouseEvent.x, message.mouseEvent.y, true);
         }
       }
+
+      if (message.type === config.WS_DRAW.CLEAR) {
+        if (message.clientId !== clientId) {
+          if (!contextRef.current || !socket) {
+            return;
+          }
+          contextRef.current.clearRect(0, 0, 800, 800);
+        }
+      }
     };
   }, [socket, beginDraw, updateDraw, clientId]);
 
   const endDraw = () => {
     contextRef.current?.closePath();
     setIsPressed(false);
-  };
-
-  const clearCanvas = () => {
-    if (!contextRef.current) {
-      return;
-    }
-    contextRef.current.clearRect(0, 0, 800, 800);
   };
 
   useEffect(() => {

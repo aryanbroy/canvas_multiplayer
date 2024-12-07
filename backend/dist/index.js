@@ -31,7 +31,12 @@ wss.on("connection", function connection(ws) {
             const clientId = message.clientId;
             const roomId = message.roomId;
             const room = rooms[roomId];
-            room.clients.push(clientId);
+            if (clientId) {
+                room.clients.push(clientId);
+            }
+            else {
+                console.log("There exist no client Id");
+            }
             const payload = {
                 type: shared_config_1.default.WS_SEND_NAMES.JOIN_ROOM,
                 msg: "Joined room",

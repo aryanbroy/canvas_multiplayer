@@ -94,12 +94,14 @@ function App() {
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === config.WS_INITIALIZE.CONNECTION) {
-        console.log(message);
+        console.log("User joined: " + JSON.stringify(message));
         setClientId(message.clientId);
       }
 
       if (message.type === config.WS_SEND_NAMES.CREATE_ROOM) {
-        console.log(message);
+        console.log("Room create: ", message);
+        setRoomId(message.roomId);
+        // console.log(message);
       }
 
       if (message.type === config.WS_SEND_NAMES.JOIN_ROOM) {

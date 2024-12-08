@@ -9,6 +9,7 @@ const wss = new ws_1.WebSocketServer({ port: 8080 });
 const clients = {};
 const rooms = {};
 wss.on("connection", function connection(ws) {
+    console.log("Connected someone: ");
     ws.on("error", console.error);
     ws.on("message", function message(data) {
         const message = JSON.parse(data.toString());
@@ -126,6 +127,7 @@ wss.on("connection", function connection(ws) {
         clientId,
     };
     ws.send(JSON.stringify(payload));
+    console.log("payload sent to client with id : ", clientId);
 });
 // generate random string to be used as room or client id
 const guid = () => {

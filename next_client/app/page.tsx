@@ -1,18 +1,35 @@
+"use client";
+
+import config from "../config/shared.config";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSocket } from "./hooks/useSocket";
-import config from "./config/shared.config";
 
-// const SOCKET_URL = "ws://localhost:8080";
-// const socket = new WebSocket(SOCKET_URL);
-
-function App() {
+export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const socket = useSocket();
+  const [socket, setSocket] = useState<WebSocket | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const [clientId, setClientId] = useState("");
   const [roomId, setRoomId] = useState("");
   const [isPressed, setIsPressed] = useState(false);
-  console.log(socket);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const newSocket = new WebSocket("ws://localhost:8080");
+      setSocket(newSocket);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (!socket) {
+      console.log("Socket not initialized!");
+      return;
+    }
+
+    console.log("Socket initialized:", socket);
+  }, [socket]);
 
   const beginDraw = useCallback(
     (x: number, y: number, isRemote: boolean = false) => {
@@ -89,12 +106,16 @@ function App() {
 
   useEffect(() => {
     if (!socket) {
+      console.log("there is no socket sorry for that");
       return;
     }
-
+    console.log("is this even being triggered: yes");
     console.log(socket.onmessage);
+
     socket.onmessage = (event) => {
+      console.log("Entering this on message thingy");
       const message = JSON.parse(event.data);
+      console.log(message);
       if (message.type === config.WS_INITIALIZE.CONNECTION) {
         console.log("User joined: " + JSON.stringify(message));
         setClientId(message.clientId);
@@ -131,6 +152,7 @@ function App() {
         }
       }
     };
+    console.log("exiting this on message thingy");
   }, [socket, beginDraw, updateDraw, clientId]);
 
   const endDraw = () => {
@@ -248,5 +270,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

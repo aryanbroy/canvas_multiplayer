@@ -2,25 +2,45 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import config from "@/config/shared.config";
+import { runTurboTracing } from "next/dist/build/swc/generated-native";
 
-export default function CanvasMainPage({
-  params,
+const checkForCanvasContainer = () => {
+  const canvasContainer = document.getElementById("canvasContainer");
+
+  if (!canvasContainer) {
+    console.log("Canvas container not found!");
+    return;
+  }
+
+  canvasContainer.style.display = "block";
+};
+
+export default function CanvasComponent({
+  socket,
+  clientId,
+  roomId,
 }: {
-  params: Promise<{ roomId: string }>;
+  socket: WebSocket | null;
+  clientId: string;
+  roomId: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  //   const [socket, setSocket] = useState<WebSocket | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
-  const [clientId, setClientId] = useState("");
-  const [roomId, setRoomId] = useState("");
+  //   const [clientId, setClientId] = useState("");
+  //   const [roomId, setRoomId] = useState("");
   const [isPressed, setIsPressed] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const newSocket = new WebSocket("ws://localhost:8080");
-      setSocket(newSocket);
-    }
+    checkForCanvasContainer();
   }, []);
+
+  //   useEffect(() => {
+  //     if (typeof window !== "undefined") {
+  //       const newSocket = new WebSocket("ws://localhost:8080");
+  //       setSocket(newSocket);
+  //     }
+  //   }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -110,26 +130,27 @@ export default function CanvasMainPage({
 
   useEffect(() => {
     if (!socket) {
+      console.log("No socket present :)");
       return;
     }
 
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       console.log(message);
-      if (message.type === config.WS_INITIALIZE.CONNECTION) {
-        console.log("User joined: " + JSON.stringify(message));
-        setClientId(message.clientId);
-      }
+      //   if (message.type === config.WS_INITIALIZE.CONNECTION) {
+      //     console.log("User joined: " + JSON.stringify(message));
+      //     setClientId(message.clientId);
+      //   }
 
-      if (message.type === config.WS_SEND_NAMES.CREATE_ROOM) {
-        console.log("Room create: ", message);
-        setRoomId(message.roomId);
-        // console.log(message);
-      }
+      //   if (message.type === config.WS_SEND_NAMES.CREATE_ROOM) {
+      //     console.log("Room create: ", message);
+      //     setRoomId(message.roomId);
+      //     // console.log(message);
+      //   }
 
-      if (message.type === config.WS_SEND_NAMES.JOIN_ROOM) {
-        console.log("Joined in the room successfully! ", message);
-      }
+      //   if (message.type === config.WS_SEND_NAMES.JOIN_ROOM) {
+      //     console.log("Joined in the room successfully! ", message);
+      //   }
 
       if (message.type === config.WS_DRAW.BEGIN_DRAW) {
         if (message.clientId !== clientId) {
@@ -152,7 +173,6 @@ export default function CanvasMainPage({
         }
       }
     };
-    console.log("exiting this on message thingy");
   }, [socket, beginDraw, updateDraw, clientId]);
 
   const endDraw = () => {
@@ -193,60 +213,30 @@ export default function CanvasMainPage({
     // };
   }, []);
 
-  const handleCreateRoom = () => {
-    if (!socket) {
-      return;
-    }
+  //   const handleJoinRoom = () => {
+  //     if (!socket) {
+  //       return;
+  //     }
 
-    const payload = {
-      type: config.WS_SEND_NAMES.CREATE_ROOM,
-      clientId: clientId,
-    };
+  //     const canvasContainer = document.getElementById("canvasContainer");
 
-    socket.send(JSON.stringify(payload));
-  };
+  //     if (!canvasContainer) {
+  //       console.log("Canvas container not found!");
+  //       return;
+  //     }
 
-  const handleJoinRoom = () => {
-    if (!socket) {
-      return;
-    }
+  //     canvasContainer.style.display = "block";
 
-    const canvasContainer = document.getElementById("canvasContainer");
+  //     const payload = {
+  //       type: config.WS_SEND_NAMES.JOIN_ROOM,
+  //       clientId,
+  //       roomId,
+  //     };
 
-    if (!canvasContainer) {
-      console.log("Canvas container not found!");
-      return;
-    }
-
-    canvasContainer.style.display = "block";
-
-    const payload = {
-      type: config.WS_SEND_NAMES.JOIN_ROOM,
-      clientId,
-      roomId,
-    };
-
-    socket.send(JSON.stringify(payload));
-  };
+  //     socket.send(JSON.stringify(payload));
+  //   };
   return (
     <div className="App" onMouseUp={endDraw}>
-      <div>
-        <h1>Kingdom come</h1>
-        <p>Client id: {clientId}</p>
-        <div
-          className=""
-          style={{ display: "flex", gap: "0.6rem", marginBottom: "1rem" }}
-        >
-          <button onClick={handleCreateRoom}>Create room</button>
-          <button onClick={handleJoinRoom}>Join room</button>
-          <input
-            type="text"
-            id="roomId"
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-          />
-        </div>
-      </div>
       <div
         className="canvas-container"
         style={{ display: "none" }}

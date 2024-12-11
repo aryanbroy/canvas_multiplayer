@@ -15,6 +15,13 @@ const checkForCanvasContainer = () => {
   canvasContainer.style.display = "block";
 };
 
+const drawingStyle = {
+  lineCap: "round" as CanvasLineCap,
+  strokeStyle: "red",
+  fillStyle: "red",
+  lineWidth: 4,
+};
+
 export default function CanvasComponent({
   socket,
   clientId,
@@ -30,6 +37,7 @@ export default function CanvasComponent({
   const [canvasHeight, setCanvasHeight] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
+  const [drawingData, setDrawingData] = useState<ImageData | null>(null);
 
   useEffect(() => {
     checkForCanvasContainer();
@@ -67,11 +75,11 @@ export default function CanvasComponent({
     }
 
     canvas.width = window.innerWidth;
-    canvas.height = canvasHeight;
+    canvas.height = window.innerHeight;
 
     context.lineCap = "round";
-    context.strokeStyle = "white";
-    context.fillStyle = "white";
+    context.strokeStyle = "red";
+    context.fillStyle = "red";
     context.lineWidth = 4;
     // context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -131,7 +139,6 @@ export default function CanvasComponent({
       if (!contextRef.current) {
         return;
       }
-
       contextRef.current.lineTo(x, y);
       contextRef.current.stroke();
 
@@ -203,6 +210,43 @@ export default function CanvasComponent({
       }
     };
   }, [socket, beginDraw, updateDraw, clientId]);
+
+  const handleResize = useCallback(() => {
+    console.log("Resizing now");
+    const canvas = canvasRef.current;
+    const context = contextRef.current;
+
+    if (!canvas || !context) return;
+
+    const tempCanvas = document.createElement("canvas");
+    const tempContext = tempCanvas.getContext("2d");
+
+    if (!tempContext) return;
+
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    tempContext.drawImage(canvas, 0, 0);
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    context.strokeStyle = drawingStyle.strokeStyle;
+    context.fillStyle = drawingStyle.fillStyle;
+    context.lineWidth = drawingStyle.lineWidth;
+    context.lineCap = drawingStyle.lineCap;
+
+    console.log(context.strokeStyle, context.fillStyle);
+
+    context.drawImage(tempCanvas, 0, 0);
+  }, [drawingData]);
+
+  useEffect(() => {
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [handleResize]);
 
   const endDraw = () => {
     contextRef.current?.closePath();

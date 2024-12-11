@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import config from "@/config/shared.config";
-import { runTurboTracing } from "next/dist/build/swc/generated-native";
+import { Button } from "./ui/button";
 
 const checkForCanvasContainer = () => {
   const canvasContainer = document.getElementById("canvasContainer");
@@ -25,22 +25,20 @@ export default function CanvasComponent({
   roomId: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  //   const [socket, setSocket] = useState<WebSocket | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
-  //   const [clientId, setClientId] = useState("");
-  //   const [roomId, setRoomId] = useState("");
   const [isPressed, setIsPressed] = useState(false);
+  const [canvasHeight, setCanvasHeight] = useState(0);
+  const [isMoving, setIsMoving] = useState(false);
+  const [isMouseDown, setIsMouseDown] = useState(false);
 
   useEffect(() => {
     checkForCanvasContainer();
-  }, []);
 
-  //   useEffect(() => {
-  //     if (typeof window !== "undefined") {
-  //       const newSocket = new WebSocket("ws://localhost:8080");
-  //       setSocket(newSocket);
-  //     }
-  //   }, []);
+    if (typeof window === "undefined") return;
+
+    const initialHeight = window.innerHeight;
+    setCanvasHeight(initialHeight);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -55,8 +53,44 @@ export default function CanvasComponent({
     console.log("Socket initialized:", socket);
   }, [socket]);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      console.log("no context for canvas");
+      return;
+    }
+
+    canvas.width = window.innerWidth;
+    canvas.height = canvasHeight;
+
+    context.lineCap = "round";
+    context.strokeStyle = "white";
+    context.fillStyle = "white";
+    context.lineWidth = 4;
+    // context.fillRect(0, 0, canvas.width, canvas.height);
+
+    contextRef.current = context;
+  }, [canvasHeight]);
+
+  const handleMovement = (e: React.MouseEvent) => {
+    if (!isMouseDown) {
+      return;
+    }
+    console.log(e.clientX, e.clientY);
+  };
+
   const beginDraw = useCallback(
     (x: number, y: number, isRemote: boolean = false) => {
+      setIsMouseDown(true);
+      if (isMoving) {
+        return;
+      }
       if (!isRemote) {
         setIsPressed(true);
       }
@@ -87,6 +121,9 @@ export default function CanvasComponent({
 
   const updateDraw = useCallback(
     (x: number, y: number, isRemote: boolean = false) => {
+      if (isMoving) {
+        return;
+      }
       if (!isPressed && !isRemote) {
         return;
       }
@@ -115,10 +152,16 @@ export default function CanvasComponent({
   );
 
   const clearCanvas = () => {
-    if (!contextRef.current || !socket) {
+    if (!contextRef.current || !socket || !canvasRef || !canvasRef.current) {
       return;
     }
-    contextRef.current.clearRect(0, 0, 800, 800);
+
+    contextRef.current.clearRect(
+      0,
+      0,
+      canvasRef.current?.width,
+      canvasRef.current?.height
+    );
 
     const payload = {
       type: config.WS_DRAW.CLEAR,
@@ -137,23 +180,9 @@ export default function CanvasComponent({
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       console.log(message);
-      //   if (message.type === config.WS_INITIALIZE.CONNECTION) {
-      //     console.log("User joined: " + JSON.stringify(message));
-      //     setClientId(message.clientId);
-      //   }
-
-      //   if (message.type === config.WS_SEND_NAMES.CREATE_ROOM) {
-      //     console.log("Room create: ", message);
-      //     setRoomId(message.roomId);
-      //     // console.log(message);
-      //   }
-
-      //   if (message.type === config.WS_SEND_NAMES.JOIN_ROOM) {
-      //     console.log("Joined in the room successfully! ", message);
-      //   }
 
       if (message.type === config.WS_DRAW.BEGIN_DRAW) {
-        if (message.clientId !== clientId) {
+        if (message.clientId !== clientId || !socket) {
           beginDraw(message.mouseEvent.x, message.mouseEvent.y, true);
         }
       }
@@ -178,83 +207,36 @@ export default function CanvasComponent({
   const endDraw = () => {
     contextRef.current?.closePath();
     setIsPressed(false);
+    setIsMouseDown(false);
   };
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) {
-      return;
-    }
-    canvas.width = 800;
-    canvas.height = 800;
-
-    const context = canvas.getContext("2d");
-
-    if (!context) {
-      console.log("no context for canvas");
-      return;
-    }
-    context.lineCap = "round";
-    context.strokeStyle = "black";
-    context.lineWidth = 4;
-
-    contextRef.current = context;
-
-    // if (!socket) {
-    //   return;
-    // }
-
-    // socket.onmessage = (event) => {
-    //   const message = JSON.parse(event.data);
-    //   if (message.type === config.WS_INITIALIZE.CONNECTION) {
-    //     console.log(message);
-    //     setClientId(message.clientId);
-    //   }
-    // };
-  }, []);
-
-  //   const handleJoinRoom = () => {
-  //     if (!socket) {
-  //       return;
-  //     }
-
-  //     const canvasContainer = document.getElementById("canvasContainer");
-
-  //     if (!canvasContainer) {
-  //       console.log("Canvas container not found!");
-  //       return;
-  //     }
-
-  //     canvasContainer.style.display = "block";
-
-  //     const payload = {
-  //       type: config.WS_SEND_NAMES.JOIN_ROOM,
-  //       clientId,
-  //       roomId,
-  //     };
-
-  //     socket.send(JSON.stringify(payload));
-  //   };
   return (
-    <div className="App" onMouseUp={endDraw}>
+    <div className="App w-full" onMouseUp={endDraw}>
       <div
-        className="canvas-container"
+        className="canvas-container w-full"
         style={{ display: "none" }}
         id="canvasContainer"
       >
-        <button onClick={clearCanvas} style={{ display: "block" }}>
-          Clear
-        </button>
+        <div className="flex gap-4 my-4">
+          <Button onClick={clearCanvas} style={{ display: "block" }}>
+            Clear
+          </Button>
+          <Button onClick={() => setIsMoving(true)}>Move</Button>
+          <Button onClick={() => setIsMoving(false)}>Draw</Button>
+        </div>
         <canvas
           ref={canvasRef}
           onMouseDown={(e) =>
             beginDraw(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
           }
-          onMouseMove={(e) =>
-            updateDraw(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+          onMouseMove={
+            isMoving && isMouseDown
+              ? handleMovement
+              : (e) => updateDraw(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
           }
           onMouseUp={endDraw}
-          style={{ border: "1px solid red" }}
+          style={{ border: "1px solid white" }}
+          className="w-full"
         />
       </div>
     </div>

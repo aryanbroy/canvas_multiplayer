@@ -246,7 +246,7 @@ export default function CreateOrJoinRoom() {
         style={{ display: "none" }}
         id="canvasContainer"
       > */}
-      {!hasJoinedRoom ? (
+      {hasJoinedRoom ? (
         <div className="w-full max-w-md p-8 rounded-lg shadow-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-md">
           <h2 className="text-2xl font-bold text-center mb-6 text-gray-800 dark:text-white">
             Create or Join a Room

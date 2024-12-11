@@ -60,6 +60,7 @@ wss.on("connection", function connection(ws) {
 
     // begin draw
     if (message.type === config.WS_DRAW.BEGIN_DRAW) {
+      if (!message.client || !message.roomId) return;
       const clientId = message.clientId;
       const roomId = message.roomId;
       const room = rooms[roomId];
@@ -84,6 +85,7 @@ wss.on("connection", function connection(ws) {
 
     // update draw
     if (message.type === config.WS_DRAW.UPDATE_DRAW) {
+      if (!message.clientId || !message.roomId) return;
       const clientId = message.clientId;
       const roomId = message.roomId;
       const room = rooms[roomId];
@@ -106,6 +108,7 @@ wss.on("connection", function connection(ws) {
 
     // clear canvas
     if (message.type === config.WS_DRAW.CLEAR) {
+      if (!message.clientId || !message.roomId) return;
       const clientId = message.clientId;
       const roomId = message.roomId;
       const room = rooms[roomId];

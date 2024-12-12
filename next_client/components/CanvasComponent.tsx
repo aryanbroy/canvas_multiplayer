@@ -42,7 +42,6 @@ export default function CanvasComponent({
   const [canvasHeight, setCanvasHeight] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
-  const [drawingData, setDrawingData] = useState<ImageData | null>(null);
   const [zoom, setZoom] = useState(1);
   const originalCanvasRef = useRef<{
     imageData?: ImageData;
@@ -171,9 +170,6 @@ export default function CanvasComponent({
         };
         socket?.send(JSON.stringify(payload));
       }
-      // setDrawingData(
-      //   contextRef.current.getImageData(0, 0, canvas.width, canvas.height)
-      // );
     },
     [clientId, roomId, isPressed, socket]
   );
@@ -231,65 +227,6 @@ export default function CanvasComponent({
     };
   }, [socket, beginDraw, updateDraw, clientId]);
 
-  // const handleResize = useCallback(() => {
-  //   console.log("Resizing now");
-  //   const canvas = canvasRef.current;
-  //   const context = contextRef.current;
-
-  //   if (!canvas || !context) return;
-
-  //   // console.log(canvas.height, maxCanvasSize?.height);
-  //   // console.log(maxCanvasSize?.height, canvas.height);
-
-  //   const updatedCanvasSize = {
-  //     height: Math.max(
-  //       maxCanvasSize?.height ?? window.innerHeight,
-  //       canvas.height
-  //     ),
-  //     width: Math.max(maxCanvasSize?.width ?? window.innerWidth, canvas.width),
-  //   };
-
-  //   setMaxCanvasSize(updatedCanvasSize);
-
-  //   const tempCanvas = document.createElement("canvas");
-  //   const tempContext = tempCanvas.getContext("2d");
-
-  //   if (!tempContext) return;
-  //   console.log(
-  //     `Max Canvas size : ${maxCanvasSize?.width} x ${maxCanvasSize?.height}`
-  //   );
-  //   tempCanvas.width = updatedCanvasSize.width;
-  //   tempCanvas.height = updatedCanvasSize.height;
-  //   tempContext.drawImage(canvas, 0, 0);
-
-  //   canvas.width = updatedCanvasSize.width;
-  //   canvas.height = updatedCanvasSize.height;
-
-  //   context.strokeStyle = drawingStyle.strokeStyle;
-  //   context.fillStyle = drawingStyle.fillStyle;
-  //   context.lineWidth = drawingStyle.lineWidth;
-  //   context.lineCap = drawingStyle.lineCap;
-
-  //   console.log(window.innerHeight, window.innerWidth);
-  //   context.drawImage(tempCanvas, 0, 0);
-  // }, [drawingData, maxCanvasSize]);
-
-  // const handleWheel = (e: WheelEvent) => {
-  //   if (e.ctrlKey) {
-  //     e.preventDefault();
-
-  //     const canvas = canvasRef.current;
-  //     const context = contextRef.current;
-
-  //     if (!canvas || !context) return;
-
-  //     const delta = e.deltaY;
-  //     const isZooming = delta < 0;
-  //     context.scale(isZooming ? 1.1 : 0.9, isZooming ? 1.1 : 0.9);
-  //     console.log(isZooming);
-  //   }
-  // };
-
   const handleWheel = (e: WheelEvent) => {
     if (e.ctrlKey) {
       e.preventDefault();
@@ -304,11 +241,6 @@ export default function CanvasComponent({
       const delta = e.deltaY;
       const zoomFactor = delta > 0 ? 0.9 : 1.1;
       const newZoom = Math.min(Math.max(zoomFactor * zoom, 0.1), 10);
-
-      // Calculate zoom position
-      // const rect = canvas.getBoundingClientRect();
-      // const mouseX = e.clientX - rect.left;
-      // const mouseY = e.clientY - rect.right;
 
       // Clear canvas
       const { imageData, width, height } = originalCanvasRef.current;
@@ -328,28 +260,14 @@ export default function CanvasComponent({
 
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        // const newOffsetX = mouseX - mouseX * newZoom;
-        // const newOffsetY = mouseY - mouseY * newZoom;
         context.save();
 
         context.scale(newZoom, newZoom);
-
-        // draw original image at new zoom level
-
-        // context.translate(
-        //   mouseX * (1 - newZoom / zoom),
-        //   mouseY * (1 - newZoom / zoom)
-        // );
-
-        // clear original canvas
-        // context.clearRect(0, 0, canvas.width, canvas.height);
 
         context.drawImage(
           tempCanvas,
           (width * (1 - newZoom)) / (2 * newZoom),
           (height * (1 - newZoom)) / (2 * newZoom)
-          // newOffsetX / newZoom,
-          // newOffsetY / newZoom
         );
         context.restore();
 
@@ -380,7 +298,6 @@ export default function CanvasComponent({
       return;
     }
 
-    setDrawingData(ctx.getImageData(0, 0, canvas.width, canvas.height));
     originalCanvasRef.current = {
       imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
       width: canvas.width,

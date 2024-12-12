@@ -242,7 +242,7 @@ export default function CanvasComponent({
       const zoomFactor = delta > 0 ? 0.9 : 1.1;
       const newZoom = Math.min(Math.max(zoomFactor * zoom, 0.1), 10);
 
-      // Clear canvas
+      // get original width height and canvas image data from original canvas
       const { imageData, width, height } = originalCanvasRef.current;
 
       if (imageData) {
@@ -260,15 +260,19 @@ export default function CanvasComponent({
 
         context.clearRect(0, 0, canvas.width, canvas.height);
 
+        // save current context to be restored later
+        // imp! as without this everything we draw after it will follow the same scale as of now
         context.save();
 
         context.scale(newZoom, newZoom);
 
         context.drawImage(
           tempCanvas,
-          (width * (1 - newZoom)) / (2 * newZoom),
-          (height * (1 - newZoom)) / (2 * newZoom)
+          (width * (1 - newZoom)) / (2 * newZoom), // ai did this, i am not qualified enough for this shii
+          (height * (1 - newZoom)) / (2 * newZoom) // basically centers the image when we zoom out and in
         );
+
+        // restores the scale so that we can return to the original scale
         context.restore();
 
         setZoom(newZoom);

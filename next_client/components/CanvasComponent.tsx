@@ -43,9 +43,12 @@ export default function CanvasComponent({
   const [isMoving, setIsMoving] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [drawingData, setDrawingData] = useState<ImageData | null>(null);
-  const [maxCanvasSize, setMaxCanvasSize] = useState<MaxCanvasSize | null>(
-    null
-  );
+  const [zoom, setZoom] = useState(1);
+  const originalCanvasRef = useRef<{
+    imageData?: ImageData;
+    width: number;
+    height: number;
+  }>({ width: 0, height: 0 });
 
   useEffect(() => {
     checkForCanvasContainer();
@@ -56,7 +59,6 @@ export default function CanvasComponent({
     const initialHeight = window.innerHeight;
     const initialWidth = window.innerWidth;
     setCanvasHeight(initialHeight);
-    setMaxCanvasSize({ height: initialHeight, width: initialWidth });
   }, []);
 
   useEffect(() => {
@@ -147,6 +149,10 @@ export default function CanvasComponent({
         return;
       }
 
+      const canvas = canvasRef.current;
+
+      if (!canvas) return;
+
       if (!contextRef.current) {
         return;
       }
@@ -165,6 +171,9 @@ export default function CanvasComponent({
         };
         socket?.send(JSON.stringify(payload));
       }
+      // setDrawingData(
+      //   contextRef.current.getImageData(0, 0, canvas.width, canvas.height)
+      // );
     },
     [clientId, roomId, isPressed, socket]
   );
@@ -222,64 +231,131 @@ export default function CanvasComponent({
     };
   }, [socket, beginDraw, updateDraw, clientId]);
 
-  const handleResize = useCallback(
-    (e: Event) => {
-      e.preventDefault();
-      console.log("Resizing now");
-      const canvas = canvasRef.current;
-      const context = contextRef.current;
+  // const handleResize = useCallback(() => {
+  //   console.log("Resizing now");
+  //   const canvas = canvasRef.current;
+  //   const context = contextRef.current;
 
-      if (!canvas || !context) return;
+  //   if (!canvas || !context) return;
 
-      // console.log(canvas.height, maxCanvasSize?.height);
-      // console.log(maxCanvasSize?.height, canvas.height);
+  //   // console.log(canvas.height, maxCanvasSize?.height);
+  //   // console.log(maxCanvasSize?.height, canvas.height);
 
-      const updatedCanvasSize = {
-        height: Math.max(
-          maxCanvasSize?.height ?? window.innerHeight,
-          canvas.height
-        ),
-        width: Math.max(
-          maxCanvasSize?.width ?? window.innerWidth,
-          canvas.width
-        ),
-      };
+  //   const updatedCanvasSize = {
+  //     height: Math.max(
+  //       maxCanvasSize?.height ?? window.innerHeight,
+  //       canvas.height
+  //     ),
+  //     width: Math.max(maxCanvasSize?.width ?? window.innerWidth, canvas.width),
+  //   };
 
-      setMaxCanvasSize(updatedCanvasSize);
+  //   setMaxCanvasSize(updatedCanvasSize);
 
-      const tempCanvas = document.createElement("canvas");
-      const tempContext = tempCanvas.getContext("2d");
+  //   const tempCanvas = document.createElement("canvas");
+  //   const tempContext = tempCanvas.getContext("2d");
 
-      if (!tempContext) return;
-      console.log(
-        `Max Canvas size : ${maxCanvasSize?.width} x ${maxCanvasSize?.height}`
-      );
-      tempCanvas.width = updatedCanvasSize.width;
-      tempCanvas.height = updatedCanvasSize.height;
-      tempContext.drawImage(canvas, 0, 0);
+  //   if (!tempContext) return;
+  //   console.log(
+  //     `Max Canvas size : ${maxCanvasSize?.width} x ${maxCanvasSize?.height}`
+  //   );
+  //   tempCanvas.width = updatedCanvasSize.width;
+  //   tempCanvas.height = updatedCanvasSize.height;
+  //   tempContext.drawImage(canvas, 0, 0);
 
-      canvas.width = updatedCanvasSize.width;
-      canvas.height = updatedCanvasSize.height;
+  //   canvas.width = updatedCanvasSize.width;
+  //   canvas.height = updatedCanvasSize.height;
 
-      context.strokeStyle = drawingStyle.strokeStyle;
-      context.fillStyle = drawingStyle.fillStyle;
-      context.lineWidth = drawingStyle.lineWidth;
-      context.lineCap = drawingStyle.lineCap;
+  //   context.strokeStyle = drawingStyle.strokeStyle;
+  //   context.fillStyle = drawingStyle.fillStyle;
+  //   context.lineWidth = drawingStyle.lineWidth;
+  //   context.lineCap = drawingStyle.lineCap;
 
-      console.log(window.innerHeight, window.innerWidth);
-      context.drawImage(tempCanvas, 0, 0);
-    },
-    [drawingData, maxCanvasSize]
-  );
+  //   console.log(window.innerHeight, window.innerWidth);
+  //   context.drawImage(tempCanvas, 0, 0);
+  // }, [drawingData, maxCanvasSize]);
+
+  // const handleWheel = (e: WheelEvent) => {
+  //   if (e.ctrlKey) {
+  //     e.preventDefault();
+
+  //     const canvas = canvasRef.current;
+  //     const context = contextRef.current;
+
+  //     if (!canvas || !context) return;
+
+  //     const delta = e.deltaY;
+  //     const isZooming = delta < 0;
+  //     context.scale(isZooming ? 1.1 : 0.9, isZooming ? 1.1 : 0.9);
+  //     console.log(isZooming);
+  //   }
+  // };
 
   const handleWheel = (e: WheelEvent) => {
     if (e.ctrlKey) {
       e.preventDefault();
-    }
+      const canvas = canvasRef.current;
 
-    const delta = e.deltaY;
-    const isZooming = delta < 0;
-    console.log(isZooming);
+      if (!canvas) return;
+
+      const context = canvas.getContext("2d");
+
+      if (!context) return;
+
+      const delta = e.deltaY;
+      const zoomFactor = delta > 0 ? 0.9 : 1.1;
+      const newZoom = Math.min(Math.max(zoomFactor * zoom, 0.1), 10);
+
+      // Calculate zoom position
+      // const rect = canvas.getBoundingClientRect();
+      // const mouseX = e.clientX - rect.left;
+      // const mouseY = e.clientY - rect.right;
+
+      // Clear canvas
+      const { imageData, width, height } = originalCanvasRef.current;
+
+      if (imageData) {
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const tempContext = tempCanvas.getContext("2d");
+
+        if (!tempContext) return;
+
+        tempContext.imageSmoothingEnabled = true;
+        tempContext.imageSmoothingQuality = "high";
+
+        tempContext.putImageData(imageData, 0, 0);
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // const newOffsetX = mouseX - mouseX * newZoom;
+        // const newOffsetY = mouseY - mouseY * newZoom;
+        context.save();
+
+        context.scale(newZoom, newZoom);
+
+        // draw original image at new zoom level
+
+        // context.translate(
+        //   mouseX * (1 - newZoom / zoom),
+        //   mouseY * (1 - newZoom / zoom)
+        // );
+
+        // clear original canvas
+        // context.clearRect(0, 0, canvas.width, canvas.height);
+
+        context.drawImage(
+          tempCanvas,
+          (width * (1 - newZoom)) / (2 * newZoom),
+          (height * (1 - newZoom)) / (2 * newZoom)
+          // newOffsetX / newZoom,
+          // newOffsetY / newZoom
+        );
+        context.restore();
+
+        setZoom(newZoom);
+      }
+    }
   };
 
   useEffect(() => {
@@ -290,12 +366,26 @@ export default function CanvasComponent({
       // window.removeEventListener("resize", handleResize);
       window.removeEventListener("wheel", handleWheel);
     };
-  }, [handleResize]);
+  }, [handleWheel]);
 
   const endDraw = () => {
     contextRef.current?.closePath();
     setIsPressed(false);
     setIsMouseDown(false);
+
+    const canvas = canvasRef.current;
+    const ctx = contextRef.current;
+
+    if (!canvas || !ctx) {
+      return;
+    }
+
+    setDrawingData(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    originalCanvasRef.current = {
+      imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
+      width: canvas.width,
+      height: canvas.height,
+    };
   };
 
   return (

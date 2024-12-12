@@ -22,6 +22,11 @@ const drawingStyle = {
   lineWidth: 4,
 };
 
+type MaxCanvasSize = {
+  height: number;
+  width: number;
+};
+
 export default function CanvasComponent({
   socket,
   clientId,
@@ -38,14 +43,20 @@ export default function CanvasComponent({
   const [isMoving, setIsMoving] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [drawingData, setDrawingData] = useState<ImageData | null>(null);
+  const [maxCanvasSize, setMaxCanvasSize] = useState<MaxCanvasSize | null>(
+    null
+  );
 
   useEffect(() => {
     checkForCanvasContainer();
 
     if (typeof window === "undefined") return;
+    console.log("initialized canvas");
 
     const initialHeight = window.innerHeight;
+    const initialWidth = window.innerWidth;
     setCanvasHeight(initialHeight);
+    setMaxCanvasSize({ height: initialHeight, width: initialWidth });
   }, []);
 
   useEffect(() => {
@@ -211,40 +222,73 @@ export default function CanvasComponent({
     };
   }, [socket, beginDraw, updateDraw, clientId]);
 
-  const handleResize = useCallback(() => {
-    console.log("Resizing now");
-    const canvas = canvasRef.current;
-    const context = contextRef.current;
+  const handleResize = useCallback(
+    (e: Event) => {
+      e.preventDefault();
+      console.log("Resizing now");
+      const canvas = canvasRef.current;
+      const context = contextRef.current;
 
-    if (!canvas || !context) return;
+      if (!canvas || !context) return;
 
-    const tempCanvas = document.createElement("canvas");
-    const tempContext = tempCanvas.getContext("2d");
+      // console.log(canvas.height, maxCanvasSize?.height);
+      // console.log(maxCanvasSize?.height, canvas.height);
 
-    if (!tempContext) return;
+      const updatedCanvasSize = {
+        height: Math.max(
+          maxCanvasSize?.height ?? window.innerHeight,
+          canvas.height
+        ),
+        width: Math.max(
+          maxCanvasSize?.width ?? window.innerWidth,
+          canvas.width
+        ),
+      };
 
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    tempContext.drawImage(canvas, 0, 0);
+      setMaxCanvasSize(updatedCanvasSize);
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+      const tempCanvas = document.createElement("canvas");
+      const tempContext = tempCanvas.getContext("2d");
 
-    context.strokeStyle = drawingStyle.strokeStyle;
-    context.fillStyle = drawingStyle.fillStyle;
-    context.lineWidth = drawingStyle.lineWidth;
-    context.lineCap = drawingStyle.lineCap;
+      if (!tempContext) return;
+      console.log(
+        `Max Canvas size : ${maxCanvasSize?.width} x ${maxCanvasSize?.height}`
+      );
+      tempCanvas.width = updatedCanvasSize.width;
+      tempCanvas.height = updatedCanvasSize.height;
+      tempContext.drawImage(canvas, 0, 0);
 
-    console.log(context.strokeStyle, context.fillStyle);
+      canvas.width = updatedCanvasSize.width;
+      canvas.height = updatedCanvasSize.height;
 
-    context.drawImage(tempCanvas, 0, 0);
-  }, [drawingData]);
+      context.strokeStyle = drawingStyle.strokeStyle;
+      context.fillStyle = drawingStyle.fillStyle;
+      context.lineWidth = drawingStyle.lineWidth;
+      context.lineCap = drawingStyle.lineCap;
+
+      console.log(window.innerHeight, window.innerWidth);
+      context.drawImage(tempCanvas, 0, 0);
+    },
+    [drawingData, maxCanvasSize]
+  );
+
+  const handleWheel = (e: WheelEvent) => {
+    if (e.ctrlKey) {
+      e.preventDefault();
+    }
+
+    const delta = e.deltaY;
+    const isZooming = delta < 0;
+    console.log(isZooming);
+  };
 
   useEffect(() => {
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    // window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      // window.removeEventListener("resize", handleResize);
+      window.removeEventListener("wheel", handleWheel);
     };
   }, [handleResize]);
 

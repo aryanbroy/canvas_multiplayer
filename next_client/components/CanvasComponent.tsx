@@ -62,6 +62,9 @@ export default function CanvasComponent({
   const [canvasNewPos, setCanvasNewPos] = useState({ x: 0, y: 0 });
   const mouseDragMovementEnd = useRef({ x: 0, y: 0 });
   const mouseDragStartCoordinates = useRef({ x: 0, y: 0 });
+  const [previousMouseDirection, setPreviousMouseDirection] = useState<
+    number | null
+  >(null);
 
   useEffect(() => {
     checkForCanvasContainer();
@@ -115,58 +118,24 @@ export default function CanvasComponent({
   const handleMovement = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
 
-    if (!isMouseDown || !canvas) {
-      return;
-    }
+    if (!isMouseDown || !canvas) return;
 
     const rect = canvas.getBoundingClientRect();
     const mousePositionX = e.clientX - rect.x;
     const mousePositionY = e.clientY - rect.y;
 
-    const deltaX = mousePositionX - mouseDragStartCoordinates.current.x;
-    const deltaY = mousePositionY - mouseDragStartCoordinates.current.y;
+    if (previousMouseDirection !== null) {
+      if (mousePositionX < previousMouseDirection) {
+        console.log("moving left");
+        setCanvasNewPos({ x: -1, y: 0 });
+      } else if (mousePositionX > previousMouseDirection) {
+        console.log("moving right");
+        setCanvasNewPos({ x: 1, y: 0 });
+      }
+    }
 
-    console.log(deltaX, deltaY);
-
-    // offsetX += deltaX;
-    // offsetY += deltaY;
-
-    // console.log(mouseDragStartCoordinates.current);
-
-    mouseDragMovementEnd.current = {
-      x: e.nativeEvent.offsetX,
-      y: e.nativeEvent.offsetY,
-    };
-
-    // console.log(
-    //   mousePositionX - mouseDragStartCoordinates.current.x,
-    //   mousePositionY - mouseDragStartCoordinates.current.y
-    // );
-
-    // setCanvasNewPos({
-    //   x: mousePositionX - mouseDragStartCoordinates.current.x,
-    //   y: mousePositionY - mouseDragStartCoordinates.current.y,
-    // });
-
-    setCanvasNewPos({
-      x: deltaX,
-      y: deltaY,
-    });
-
-    // const relativeX =
-    //   mouseDragMovementEnd.current.x - mouseDragStartCoordinates.current.x;
-    // const relativeY =
-    //   mouseDragMovementEnd.current.y - mouseDragStartCoordinates.current.y;
-
-    // // setCanvasNewPos({ x: relativeX, y: relativeY });
-    // setCanvasNewPos((prev) => ({
-    //   x: prev.x + relativeX,
-    //   y: prev.y + relativeY,
-    // }));
-
-    // mouseDragStartCoordinates.current = mouseDragMovementEnd.current;
+    setPreviousMouseDirection(mousePositionX);
   };
-
   useEffect(() => {
     const canvas = canvasRef.current;
 
@@ -176,40 +145,11 @@ export default function CanvasComponent({
 
     if (!context) return;
 
-    // console.log(context.getImageData(0, 0, canvas.width, canvas.height));
-    // console.log(canvasNewPos);
-    // console.log(
-    //   mouseDragStartCoordinates.current.x,
-    //   mouseDragStartCoordinates.current.y
-    // );
-
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     console.log(canvasNewPos.x, canvasNewPos.y);
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.putImageData(
-      imageData,
-      canvasNewPos.x > 0 ? 10 : -10,
-      canvasNewPos.y > 0 ? 10 : -10
-    );
-
-    // context.putImageData(
-    //   imageData,
-    //   Math.min(offsetX, 10),
-    //   Math.min(offsetY, 10)
-    // );
+    context.putImageData(imageData, canvasNewPos.x > 0 ? 20 : -20, 0);
   }, [canvasNewPos]);
-
-  // useEffect(() => {
-  //   if (canvasRef.current) {
-  //     const ctx = canvasRef.current.getContext("2d");
-  //     if (!ctx) return;
-  //     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-  //     ctx.save();
-
-  //     ctx.translate(canvasNewPos.x, canvasNewPos.y);
-  //     ctx.restore();
-  //   }
-  // }, [canvasNewPos]);
 
   const beginDraw = useCallback(
     (x: number, y: number, isRemote: boolean = false) => {

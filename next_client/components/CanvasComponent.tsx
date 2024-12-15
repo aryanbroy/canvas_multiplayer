@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import config from "@/config/shared.config";
 import { Button } from "./ui/button";
 
+
 const checkForCanvasContainer = () => {
   const canvasContainer = document.getElementById("canvasContainer");
 
@@ -21,6 +22,11 @@ const drawingStyle = {
   fillStyle: "red",
   lineWidth: 4,
 };
+
+// const mouseDragMovementEnd = {
+//   x: 0,
+//   y: 0,
+// };
 
 type MaxCanvasSize = {
   height: number;
@@ -48,6 +54,14 @@ export default function CanvasComponent({
     width: number;
     height: number;
   }>({ width: 0, height: 0 });
+  // const [mouseDragStartCoordinates, setMouseDragStartCoordinates] = useState({
+  //   x: 0,
+  //   y: 0,
+  // });
+
+  const [canvasNewPos, setCanvasNewPos] = useState({ x: 0, y: 0 });
+  const mouseDragMovementEnd = useRef({ x: 0, y: 0 });
+  const mouseDragStartCoordinates = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     checkForCanvasContainer();
@@ -86,8 +100,8 @@ export default function CanvasComponent({
       return;
     }
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = 2000;
+    canvas.height = 2000;
 
     context.lineCap = "round";
     context.strokeStyle = "red";
@@ -99,15 +113,108 @@ export default function CanvasComponent({
   }, [canvasHeight]);
 
   const handleMovement = (e: React.MouseEvent) => {
-    if (!isMouseDown) {
+    const canvas = canvasRef.current;
+
+    if (!isMouseDown || !canvas) {
       return;
     }
-    console.log(e.clientX, e.clientY);
+
+    const rect = canvas.getBoundingClientRect();
+    const mousePositionX = e.clientX - rect.x;
+    const mousePositionY = e.clientY - rect.y;
+
+    const deltaX = mousePositionX - mouseDragStartCoordinates.current.x;
+    const deltaY = mousePositionY - mouseDragStartCoordinates.current.y;
+
+    console.log(deltaX, deltaY);
+
+    // offsetX += deltaX;
+    // offsetY += deltaY;
+
+    // console.log(mouseDragStartCoordinates.current);
+
+    mouseDragMovementEnd.current = {
+      x: e.nativeEvent.offsetX,
+      y: e.nativeEvent.offsetY,
+    };
+
+    // console.log(
+    //   mousePositionX - mouseDragStartCoordinates.current.x,
+    //   mousePositionY - mouseDragStartCoordinates.current.y
+    // );
+
+    // setCanvasNewPos({
+    //   x: mousePositionX - mouseDragStartCoordinates.current.x,
+    //   y: mousePositionY - mouseDragStartCoordinates.current.y,
+    // });
+
+    setCanvasNewPos({
+      x: deltaX,
+      y: deltaY,
+    });
+
+    // const relativeX =
+    //   mouseDragMovementEnd.current.x - mouseDragStartCoordinates.current.x;
+    // const relativeY =
+    //   mouseDragMovementEnd.current.y - mouseDragStartCoordinates.current.y;
+
+    // // setCanvasNewPos({ x: relativeX, y: relativeY });
+    // setCanvasNewPos((prev) => ({
+    //   x: prev.x + relativeX,
+    //   y: prev.y + relativeY,
+    // }));
+
+    // mouseDragStartCoordinates.current = mouseDragMovementEnd.current;
   };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+
+    if (!canvas) return;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) return;
+
+    // console.log(context.getImageData(0, 0, canvas.width, canvas.height));
+    // console.log(canvasNewPos);
+    // console.log(
+    //   mouseDragStartCoordinates.current.x,
+    //   mouseDragStartCoordinates.current.y
+    // );
+
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    console.log(canvasNewPos.x, canvasNewPos.y);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.putImageData(
+      imageData,
+      canvasNewPos.x > 0 ? 10 : -10,
+      canvasNewPos.y > 0 ? 10 : -10
+    );
+
+    // context.putImageData(
+    //   imageData,
+    //   Math.min(offsetX, 10),
+    //   Math.min(offsetY, 10)
+    // );
+  }, [canvasNewPos]);
+
+  // useEffect(() => {
+  //   if (canvasRef.current) {
+  //     const ctx = canvasRef.current.getContext("2d");
+  //     if (!ctx) return;
+  //     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  //     ctx.save();
+
+  //     ctx.translate(canvasNewPos.x, canvasNewPos.y);
+  //     ctx.restore();
+  //   }
+  // }, [canvasNewPos]);
 
   const beginDraw = useCallback(
     (x: number, y: number, isRemote: boolean = false) => {
       setIsMouseDown(true);
+      mouseDragStartCoordinates.current = { x, y };
       if (isMoving) {
         return;
       }
@@ -118,6 +225,8 @@ export default function CanvasComponent({
       if (!contextRef.current || !socket) {
         return;
       }
+      // contextRef.current.translate(10, 10);
+      // contextRef.current.fillRect(10, 10, 100, 50);
 
       contextRef.current.beginPath();
       contextRef.current.moveTo(x, y);
@@ -334,8 +443,20 @@ export default function CanvasComponent({
               : (e) => updateDraw(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
           }
           onMouseUp={endDraw}
-          style={{ border: "1px solid white" }}
-          className="w-full"
+          style={{
+            // position: "absolute",
+            // top: `${canvasNewPos.y}px`,
+            // left: `${canvasNewPos.x}px`,
+            border: "1px solid white",
+            cursor:
+              isMoving && isMouseDown
+                ? "grabbing"
+                : isMouseDown
+                ? "crosshair"
+                : isMoving
+                ? "grab"
+                : "default",
+          }}
         />
       </div>
     </div>

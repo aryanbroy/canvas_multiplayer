@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, LogIn } from "lucide-react";
 import config from "@/config/shared.config";
-import CanvasComponent from "@/components/CanvasComponent";
+import CanvasComponent from "@/components/canvas/CanvasComponent";
 
 export default function CreateOrJoinRoom() {
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);

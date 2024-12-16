@@ -58,6 +58,9 @@ export default function CanvasComponent({
   //   x: 0,
   //   y: 0,
   // });
+  const [canvasState, setCanvasState] = useState({
+    offset: { x: 0, y: 0 },
+  });
 
   const [canvasNewPos, setCanvasNewPos] = useState({ x: 0, y: 0 });
   const mouseDragMovementEnd = useRef({ x: 0, y: 0 });
@@ -65,6 +68,8 @@ export default function CanvasComponent({
   const [previousMouseDirection, setPreviousMouseDirection] = useState<
     number | null
   >(null);
+
+  const lastMouseMoveTime = useRef(Date.now());
 
   useEffect(() => {
     checkForCanvasContainer();
@@ -115,27 +120,60 @@ export default function CanvasComponent({
     contextRef.current = context;
   }, [canvasHeight]);
 
+  // const handleMovement = (e: React.MouseEvent) => {
+  //   const canvas = canvasRef.current;
+
+  //   if (!isMouseDown || !canvas) return;
+
+  //   const rect = canvas.getBoundingClientRect();
+  //   const mousePositionX = e.clientX - rect.x;
+  //   const mousePositionY = e.clientY - rect.y;
+
+  //   // if (previousMouseDirection !== null) {
+  //   //   if (mousePositionX < previousMouseDirection) {
+  //   //     // console.log("moving left");
+  //   //     setCanvasNewPos({ x: -1, y: 0 });
+  //   //   } else if (mousePositionX > previousMouseDirection) {
+  //   //     // console.log("moving right");
+  //   //     setCanvasNewPos({ x: 1, y: 0 });
+  //   //   }
+  //   // }
+
+  //   const currentTime = Date.now();
+
+  //   if (previousMouseDirection !== null) {
+  //     const timeDelta = currentTime - lastMouseMoveTime.current;
+  //     const distanceMoved = Math.abs(
+  //       mousePositionX - mouseDragStartCoordinates.current.x
+  //     );
+
+  //     const acceleration = distanceMoved / timeDelta;
+  //     console.log(acceleration);
+  //   }
+
+  //   setPreviousMouseDirection(mousePositionX);
+  // };
+
+  const getCanvasCoordinates = (e: React.MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+
+    // console.log(e.clientX, e.clientY);
+    console.log((e.clientX - rect.left) / zoom, (e.clientY - rect.top) / zoom);
+    return {
+      x: (e.clientX - rect.left - canvasState.offset.x) / zoom,
+      y: (e.clientY - rect.top - canvasState.offset.y) / zoom,
+    };
+  };
+
   const handleMovement = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    if (!isMouseDown || !canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const mousePositionX = e.clientX - rect.x;
-    const mousePositionY = e.clientY - rect.y;
-
-    if (previousMouseDirection !== null) {
-      if (mousePositionX < previousMouseDirection) {
-        console.log("moving left");
-        setCanvasNewPos({ x: -1, y: 0 });
-      } else if (mousePositionX > previousMouseDirection) {
-        console.log("moving right");
-        setCanvasNewPos({ x: 1, y: 0 });
-      }
-    }
-
-    setPreviousMouseDirection(mousePositionX);
+    const coords = getCanvasCoordinates(e);
   };
+
   useEffect(() => {
     const canvas = canvasRef.current;
 
@@ -146,7 +184,7 @@ export default function CanvasComponent({
     if (!context) return;
 
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    console.log(canvasNewPos.x, canvasNewPos.y);
+    console.log(canvasNewPos);
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.putImageData(imageData, canvasNewPos.x > 0 ? 20 : -20, 0);
   }, [canvasNewPos]);

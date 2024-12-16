@@ -85,7 +85,7 @@ export default function CanvasComponent({
         drawings: [...prev.drawings, [coords]],
       }));
     }
-    if (e.button === 1) {
+    if (e.button === 1 || e.button === 2) {
       setIsPanning(true);
       setLastPosition({ x: e.clientX, y: e.clientY });
     }
@@ -148,6 +148,7 @@ export default function CanvasComponent({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
+        onContextMenu={(e) => e.preventDefault()}
         className="cursor-crosshair border border-white"
       />
     </div>

@@ -36,6 +36,7 @@ export default function CanvasComponent({
     context.clearRect(0, 0, canvas.width, canvas.height);
 
     context.translate(canvasState.offset.x, canvasState.offset.y);
+    context.scale(canvasState.scale, canvasState.scale);
 
     context.save();
 
@@ -119,6 +120,26 @@ export default function CanvasComponent({
     setIsPanning(false);
   };
 
+  const handleWheel = (e: React.WheelEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    if (e.deltaY > 0) {
+      setCanvasState((prev) => ({
+        ...prev,
+        scale: prev.scale * 0.9,
+      }));
+    } else {
+      setCanvasState((prev) => ({
+        ...prev,
+        scale: prev.scale * 1.1,
+      }));
+    }
+  };
+
   return (
     <div className="w-full h-screen overflow-hidden">
       <canvas
@@ -126,6 +147,7 @@ export default function CanvasComponent({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onWheel={handleWheel}
         className="cursor-crosshair border border-white"
       />
     </div>

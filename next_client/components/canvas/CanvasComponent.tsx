@@ -31,14 +31,14 @@ export default function CanvasComponent({
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = "high";
 
-    console.log(canvasState.offset);
-
     context.clearRect(0, 0, canvas.width, canvas.height);
+
+    context.save();
 
     context.translate(canvasState.offset.x, canvasState.offset.y);
     context.scale(canvasState.scale, canvasState.scale);
 
-    context.save();
+    console.log(canvasState.scale);
 
     canvasState.drawings.forEach((drawing) => {
       if (!drawing[0]) return;
@@ -51,7 +51,7 @@ export default function CanvasComponent({
       context.lineCap = "round";
       context.strokeStyle = "red";
       context.fillStyle = "red";
-      context.lineWidth = 4;
+      context.lineWidth = 4 * (1 / canvasState.scale);
       context.stroke();
     });
 

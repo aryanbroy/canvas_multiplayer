@@ -28,6 +28,9 @@ export default function CanvasComponent({
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    // canvas.width = 800;
+    // canvas.height = 800;
+
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = "high";
 
@@ -49,8 +52,8 @@ export default function CanvasComponent({
         context.lineTo(point.x, point.y);
       });
       context.lineCap = "round";
-      context.strokeStyle = "red";
-      context.fillStyle = "red";
+      context.strokeStyle = "#e9ecef";
+      context.fillStyle = "#e9ecef";
       context.lineWidth = 4 * (1 / canvasState.scale);
       context.stroke();
     });
@@ -87,6 +90,7 @@ export default function CanvasComponent({
     }
     if (e.button === 1 || e.button === 2) {
       setIsPanning(true);
+      canvas.style.cursor = "grabbing";
       setLastPosition({ x: e.clientX, y: e.clientY });
     }
   };
@@ -116,8 +120,13 @@ export default function CanvasComponent({
   };
 
   const handleMouseUp = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     setIsDrawing(false);
     setIsPanning(false);
+
+    canvas.style.cursor = "default";
   };
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -141,7 +150,7 @@ export default function CanvasComponent({
   };
 
   return (
-    <div className="w-full h-screen overflow-hidden">
+    <div className="w-full h-screen overflow-hidden relative flex justify-center bg-defaultBg">
       <canvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
@@ -149,8 +158,13 @@ export default function CanvasComponent({
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
         onContextMenu={(e) => e.preventDefault()}
-        className="cursor-crosshair border border-white"
+        className="cursor-crosshair block"
       />
+      <div className="absolute flex gap-3 p-3 top-5 bg-slate-800 bg-opacity-50 rounded-lg">
+        <button>Btn 1</button>
+        <button>Btn 2</button>
+        <button>Btn 3</button>
+      </div>
     </div>
   );
 }

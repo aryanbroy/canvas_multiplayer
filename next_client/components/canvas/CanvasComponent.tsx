@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import { X, PencilLine, ALargeSmall, Ghost } from "lucide-react";
+import { Button } from "../ui/button";
 
 export default function CanvasComponent({
   socket,
@@ -149,6 +151,10 @@ export default function CanvasComponent({
     }
   };
 
+  const handleCanvasClear = () => {
+    setCanvasState((prev) => ({ ...prev, drawings: [] }));
+  };
+
   return (
     <div className="w-full h-screen overflow-hidden relative flex justify-center bg-defaultBg">
       <canvas
@@ -160,10 +166,16 @@ export default function CanvasComponent({
         onContextMenu={(e) => e.preventDefault()}
         className="cursor-crosshair block"
       />
-      <div className="absolute flex gap-3 p-3 top-5 bg-slate-800 bg-opacity-50 rounded-lg">
-        <button>Btn 1</button>
-        <button>Btn 2</button>
-        <button>Btn 3</button>
+      <div className="absolute flex gap-2 p-1 top-5 bg-slate-800 bg-opacity-50 rounded-lg">
+        <Button variant={"ghost"} size={"icon"} onClick={handleCanvasClear}>
+          <X size={15} />
+        </Button>
+        <Button variant={"ghost"} size={"icon"}>
+          <PencilLine />
+        </Button>
+        <Button variant={"ghost"} size={"icon"}>
+          <ALargeSmall />
+        </Button>
       </div>
     </div>
   );

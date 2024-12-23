@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { X, PencilLine, ALargeSmall, Ghost } from "lucide-react";
+import { X, PencilLine, ALargeSmall, Ghost, Eraser } from "lucide-react";
 import { Button } from "../ui/button";
+
+type CanvasState = {
+  drawings: ({ x: number; y: number; isEraser?: boolean } | undefined)[][];
+  offset: { x: number; y: number };
+  scale: number;
+};
 
 export default function CanvasComponent({
   socket,
@@ -14,12 +20,13 @@ export default function CanvasComponent({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
-  const [canvasState, setCanvasState] = useState({
-    drawings: [] as ({ x: number; y: number } | undefined)[][],
+  const [canvasState, setCanvasState] = useState<CanvasState>({
+    drawings: [],
     offset: { x: 0, y: 0 },
     scale: 1,
   });
   const [lastPosition, setLastPosition] = useState({ x: 0, y: 0 });
+  const [activeBtn, setActiveBtn] = useState("draw");
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -43,8 +50,6 @@ export default function CanvasComponent({
     context.translate(canvasState.offset.x, canvasState.offset.y);
     context.scale(canvasState.scale, canvasState.scale);
 
-    console.log(canvasState.scale);
-
     canvasState.drawings.forEach((drawing) => {
       if (!drawing[0]) return;
       context.beginPath();
@@ -54,9 +59,11 @@ export default function CanvasComponent({
         context.lineTo(point.x, point.y);
       });
       context.lineCap = "round";
-      context.strokeStyle = "#e9ecef";
-      context.fillStyle = "#e9ecef";
-      context.lineWidth = 4 * (1 / canvasState.scale);
+      context.strokeStyle = drawing[0]?.isEraser ? "#121212" : "#e9ecef";
+      context.fillStyle = drawing[0].isEraser ? "#121212" : "#e9ecef";
+      context.lineWidth = drawing[0].isEraser
+        ? 15
+        : 4 * (1 / canvasState.scale);
       context.stroke();
     });
 
@@ -82,13 +89,24 @@ export default function CanvasComponent({
     if (!canvas) return;
 
     const coords = getCoordinates(e);
+    if (!coords) return;
     if (e.button === 0) {
-      console.log("Now drawing");
-      setIsDrawing(true);
-      setCanvasState((prev) => ({
-        ...prev,
-        drawings: [...prev.drawings, [coords]],
-      }));
+      if (activeBtn === "draw" || activeBtn === "erase") {
+        console.log("Now drawing");
+        setIsDrawing(true);
+        setCanvasState((prev) => ({
+          ...prev,
+          drawings: [
+            ...prev.drawings,
+            [
+              {
+                ...coords,
+                isEraser: activeBtn === "erase",
+              },
+            ],
+          ],
+        }));
+      }
     }
     if (e.button === 1 || e.button === 2) {
       setIsPanning(true);
@@ -100,10 +118,11 @@ export default function CanvasComponent({
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isDrawing) {
       const coords = getCoordinates(e);
+      if (!coords) return;
       setCanvasState((prev) => {
         const updatedDrawings = [...prev.drawings];
         const lastDrawing = updatedDrawings[updatedDrawings.length - 1];
-        lastDrawing.push(coords);
+        lastDrawing.push({ ...coords, isEraser: activeBtn === "erase" });
         return { ...prev, drawings: updatedDrawings };
       });
     }
@@ -122,6 +141,7 @@ export default function CanvasComponent({
   };
 
   const handleMouseUp = () => {
+    console.log(canvasState.drawings);
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -155,6 +175,11 @@ export default function CanvasComponent({
     setCanvasState((prev) => ({ ...prev, drawings: [] }));
   };
 
+  const handleBtnClick = (e: any) => {
+    const target = e.target as HTMLElement;
+    setActiveBtn(target.id);
+  };
+
   return (
     <div className="w-full h-screen overflow-hidden relative flex justify-center bg-defaultBg">
       <canvas
@@ -170,11 +195,29 @@ export default function CanvasComponent({
         <Button variant={"ghost"} size={"icon"} onClick={handleCanvasClear}>
           <X size={15} />
         </Button>
-        <Button variant={"ghost"} size={"icon"}>
+        <Button
+          id="draw"
+          onClick={handleBtnClick}
+          variant={activeBtn === "draw" ? "default" : "ghost"}
+          size={"icon"}
+        >
           <PencilLine />
         </Button>
-        <Button variant={"ghost"} size={"icon"}>
+        <Button
+          id="input"
+          onClick={handleBtnClick}
+          variant={activeBtn === "input" ? "default" : "ghost"}
+          size={"icon"}
+        >
           <ALargeSmall />
+        </Button>
+        <Button
+          id="erase"
+          onClick={handleBtnClick}
+          variant={activeBtn === "erase" ? "default" : "ghost"}
+          size={"icon"}
+        >
+          <Eraser />
         </Button>
       </div>
     </div>

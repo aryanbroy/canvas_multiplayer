@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { X, PencilLine, ALargeSmall, Ghost, Eraser } from "lucide-react";
+import { X, PencilLine, ALargeSmall, Eraser } from "lucide-react";
 import { Button } from "../ui/button";
 
 type CanvasState = {
@@ -31,14 +31,23 @@ export default function CanvasComponent({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    if (activeBtn === "draw") {
+      canvas.style.cursor = "crosshair";
+    }
+    if (activeBtn === "erase") {
+      canvas.style.cursor = "url('/erase.svg') 15 15, auto";
+    }
+  }, [activeBtn]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     const context = canvas.getContext("2d");
     if (!context) return;
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
-    // canvas.width = 800;
-    // canvas.height = 800;
 
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = "high";
@@ -92,7 +101,6 @@ export default function CanvasComponent({
     if (!coords) return;
     if (e.button === 0) {
       if (activeBtn === "draw" || activeBtn === "erase") {
-        console.log("Now drawing");
         setIsDrawing(true);
         setCanvasState((prev) => ({
           ...prev,
@@ -147,8 +155,6 @@ export default function CanvasComponent({
 
     setIsDrawing(false);
     setIsPanning(false);
-
-    canvas.style.cursor = "default";
   };
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -189,7 +195,7 @@ export default function CanvasComponent({
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
         onContextMenu={(e) => e.preventDefault()}
-        className="cursor-crosshair block"
+        className="block"
       />
       <div className="absolute flex gap-2 p-1 top-5 bg-slate-800 bg-opacity-50 rounded-lg">
         <Button variant={"ghost"} size={"icon"} onClick={handleCanvasClear}>

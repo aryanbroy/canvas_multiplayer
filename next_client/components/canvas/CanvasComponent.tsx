@@ -1,18 +1,19 @@
+import { CanvasState, SquareCanvasState, TempCanvasState } from "@/lib/types";
+import {
+  ALargeSmall,
+  Eraser,
+  PencilLine,
+  PencilOff,
+  Square,
+  X,
+} from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import { X, PencilLine, ALargeSmall, Eraser, PencilOff } from "lucide-react";
+import {
+  drawCanvasState,
+  drawSquare,
+  drawTempCanvasState,
+} from "../misc/drawingFunc";
 import { Button } from "../ui/button";
-import { sleep } from "../misc/fadeout";
-
-type CanvasState = {
-  drawings: ({ x: number; y: number; isEraser?: boolean } | undefined)[][];
-  offset: { x: number; y: number };
-  scale: number;
-};
-
-type TempCanvasState = {
-  drawings: ({ x: number; y: number } | undefined)[][];
-  opacity: number;
-};
 
 export default function CanvasComponent({
   socket,
@@ -38,12 +39,18 @@ export default function CanvasComponent({
     drawings: [],
     opacity: 1,
   });
+  const [isDrawingSquare, setIsDrawingSquare] = useState(false);
+  const [squareCanvasState, setSquareCanvasState] = useState<SquareCanvasState>(
+    {
+      drawings: [],
+    }
+  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    if (activeBtn === "draw") {
+    if (activeBtn === "draw" || activeBtn === "square") {
       canvas.style.cursor = "crosshair";
     }
     if (activeBtn === "erase") {
@@ -71,22 +78,7 @@ export default function CanvasComponent({
     context.scale(canvasState.scale, canvasState.scale);
 
     // draw the permanent drawings
-    canvasState.drawings.forEach((drawing) => {
-      if (!drawing[0]) return;
-      context.beginPath();
-      context.moveTo(drawing[0].x, drawing[0].y);
-      drawing.forEach((point) => {
-        if (!point) return;
-        context.lineTo(point.x, point.y);
-      });
-      context.lineCap = "round";
-      context.strokeStyle = drawing[0]?.isEraser ? "#121212" : "#e9ecef";
-      context.fillStyle = drawing[0].isEraser ? "#121212" : "#e9ecef";
-      context.lineWidth = drawing[0].isEraser
-        ? 15
-        : 4 * (1 / canvasState.scale);
-      context.stroke();
-    });
+    drawCanvasState(canvasState, context);
 
     context.restore();
 
@@ -94,24 +86,13 @@ export default function CanvasComponent({
 
     //draw the temporary drawings
     context.globalAlpha = tempCanvasState.opacity;
-    tempCanvasState.drawings.forEach((drawing) => {
-      if (!drawing[0]) return;
-      context.beginPath();
-      context.moveTo(drawing[0].x, drawing[0].y);
-      drawing.forEach((point) => {
-        if (!point) return;
-        context.lineTo(point.x, point.y);
-      });
-      context.lineCap = "round";
-      context.shadowBlur = 10;
-      context.shadowColor = "red";
-      context.strokeStyle = "#ff073a";
-      context.fillStyle = "#ff073a";
-      context.lineWidth = 8;
-      context.stroke();
-    });
-    // context.restore();
-  }, [canvasState, tempCanvasState]);
+    drawTempCanvasState(tempCanvasState, context);
+    context.restore();
+
+    context.save();
+    drawSquare(squareCanvasState, context);
+    context.restore();
+  }, [canvasState, tempCanvasState, squareCanvasState]);
 
   const getCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -134,6 +115,13 @@ export default function CanvasComponent({
     const coords = getCoordinates(e);
     if (!coords) return;
     if (e.button === 0) {
+      if (activeBtn === "square") {
+        setIsDrawingSquare(true);
+        console.log(coords);
+        setSquareCanvasState((prev) => ({
+          drawings: [...prev.drawings, [{ ...coords }]],
+        }));
+      }
       if (activeBtn === "disPencil") {
         // console.log("Dissapear pencil");
         setIsTempDrawing(true);
@@ -175,9 +163,11 @@ export default function CanvasComponent({
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    const coords = getCoordinates(e);
+    if (!coords) return;
     if (isTempDrawing) {
-      const coords = getCoordinates(e);
-      if (!coords) return;
+      // const coords = getCoordinates(e);
+      // if (!coords) return;
       setTempCanvasState((prev) => {
         const updatedDrawings = [...prev.drawings];
         const lastDrawing = updatedDrawings[updatedDrawings.length - 1];
@@ -186,8 +176,8 @@ export default function CanvasComponent({
       });
     }
     if (isDrawing) {
-      const coords = getCoordinates(e);
-      if (!coords) return;
+      // const coords = getCoordinates(e);
+      // if (!coords) return;
       setCanvasState((prev) => {
         const updatedDrawings = [...prev.drawings];
         const lastDrawing = updatedDrawings[updatedDrawings.length - 1];
@@ -207,6 +197,14 @@ export default function CanvasComponent({
       }));
       setLastPosition({ x: e.clientX, y: e.clientY });
     }
+    if (isDrawingSquare) {
+      setSquareCanvasState((prev) => {
+        const updatedDrawings = [...prev.drawings];
+        const lastDrawing = updatedDrawings[updatedDrawings.length - 1];
+        lastDrawing.push({ ...coords });
+        return { ...prev, drawings: updatedDrawings };
+      });
+    }
   };
 
   const fadeOut = async () => {
@@ -224,23 +222,9 @@ export default function CanvasComponent({
         });
       }, fadeTime);
     });
-    // while (tempCanvasState.opacity > 0) {
-    //   console.log(tempCanvasState.opacity);
-    //   // console.log("downing the opacity");
-    //   setTempCanvasState((prev) => ({
-    //     ...prev,
-    //     opacity: prev.opacity - fadeOutValue,
-    //   }));
-    //   await sleep(fadeTime);
-    // }
-    // console.log("temp Canvas state", tempCanvasState.drawings);
-    // if (tempCanvasState.opacity <= 0) {
-    //   setTempCanvasState((prev) => ({ ...prev, drawings: [] }));
-    // }
   };
 
   const handleMouseUp = async () => {
-    console.log(canvasState.drawings);
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext("2d");
@@ -249,6 +233,7 @@ export default function CanvasComponent({
     setIsDrawing(false);
     setIsPanning(false);
     setIsTempDrawing(false);
+    setIsDrawingSquare(false);
     await fadeOut();
   };
   const handleWheel = (e: React.WheelEvent) => {
@@ -302,6 +287,14 @@ export default function CanvasComponent({
           size={"icon"}
         >
           <PencilLine />
+        </Button>
+        <Button
+          id="square"
+          variant={activeBtn === "square" ? "default" : "ghost"}
+          onClick={handleBtnClick}
+          size={"icon"}
+        >
+          <Square />
         </Button>
         <Button
           id="input"

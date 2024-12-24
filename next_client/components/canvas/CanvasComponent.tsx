@@ -103,9 +103,11 @@ export default function CanvasComponent({
         context.lineTo(point.x, point.y);
       });
       context.lineCap = "round";
-      context.strokeStyle = "red";
-      context.fillStyle = "red";
-      context.lineWidth = 4;
+      context.shadowBlur = 10;
+      context.shadowColor = "red";
+      context.strokeStyle = "#ff073a";
+      context.fillStyle = "#ff073a";
+      context.lineWidth = 8;
       context.stroke();
     });
     // context.restore();
@@ -133,11 +135,19 @@ export default function CanvasComponent({
     if (!coords) return;
     if (e.button === 0) {
       if (activeBtn === "disPencil") {
-        console.log("Dissapear pencil");
+        // console.log("Dissapear pencil");
         setIsTempDrawing(true);
         setTempCanvasState((prev) => ({
           ...prev,
-          drawings: [[{ ...coords }]],
+          drawings: [
+            ...prev.drawings,
+            [
+              {
+                ...coords,
+              },
+            ],
+          ],
+          opacity: 1,
         }));
         return;
       }
@@ -171,8 +181,8 @@ export default function CanvasComponent({
       setTempCanvasState((prev) => {
         const updatedDrawings = [...prev.drawings];
         const lastDrawing = updatedDrawings[updatedDrawings.length - 1];
-        lastDrawing.push({ ...coords });
-        return { ...prev, drawings: updatedDrawings };
+        lastDrawing?.push({ ...coords });
+        return { ...prev, drawings: updatedDrawings, opacity: 1 };
       });
     }
     if (isDrawing) {
@@ -200,10 +210,10 @@ export default function CanvasComponent({
   };
 
   const fadeOut = async () => {
-    let fadeTime = 100;
+    let fadeTime = 50;
     let fadeOutValue = 0.05;
 
-    return new Promise((resolve) => {
+    return new Promise(() => {
       const fadeEffect = setInterval(() => {
         setTempCanvasState((prev) => {
           if (prev.opacity <= 0) {

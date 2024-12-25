@@ -258,6 +258,7 @@ export default function CanvasComponent({
 
   const handleCanvasClear = () => {
     setCanvasState((prev) => ({ ...prev, drawings: [] }));
+    setSquareCanvasState((prev) => ({ ...prev, drawings: [] }));
   };
 
   const handleBtnClick = (e: any) => {

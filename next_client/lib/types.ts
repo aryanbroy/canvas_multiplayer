@@ -12,3 +12,7 @@ export type TempCanvasState = {
 export type SquareCanvasState = {
   drawings: { x: number; y: number }[][];
 };
+
+export type LineCanvasState = {
+  drawings: { x: number; y: number }[][];
+};

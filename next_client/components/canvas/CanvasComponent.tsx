@@ -1,7 +1,13 @@
-import { CanvasState, SquareCanvasState, TempCanvasState } from "@/lib/types";
+import {
+  CanvasState,
+  LineCanvasState,
+  SquareCanvasState,
+  TempCanvasState,
+} from "@/lib/types";
 import {
   ALargeSmall,
   Eraser,
+  Minus,
   PencilLine,
   PencilOff,
   Square,
@@ -10,6 +16,7 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import {
   drawCanvasState,
+  drawLine,
   drawSquare,
   drawTempCanvasState,
 } from "../misc/drawingFunc";
@@ -45,6 +52,10 @@ export default function CanvasComponent({
       drawings: [],
     }
   );
+  const [lineCanvasState, setLineCanvasState] = useState<LineCanvasState>({
+    drawings: [],
+  });
+  const [isDrawingLine, setIsDrawingLine] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -92,7 +103,11 @@ export default function CanvasComponent({
     context.save();
     drawSquare(squareCanvasState, context);
     context.restore();
-  }, [canvasState, tempCanvasState, squareCanvasState]);
+
+    context.save();
+    drawLine(lineCanvasState, context);
+    context.restore();
+  }, [canvasState, tempCanvasState, squareCanvasState, lineCanvasState]);
 
   const getCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -114,10 +129,22 @@ export default function CanvasComponent({
 
     const coords = getCoordinates(e);
     if (!coords) return;
+
     if (e.button === 0) {
+      if (activeBtn === "line") {
+        setIsDrawingLine(true);
+        setLineCanvasState((prev) => ({
+          drawings: [...prev.drawings, [{ ...coords }]],
+        }));
+        //basically the same
+        // setLineCanvasState((prev) => ({
+        //   ...prev,
+        //   drawings: [...prev.drawings, [{ ...coords }]],
+        // }));
+      }
+
       if (activeBtn === "square") {
         setIsDrawingSquare(true);
-        console.log(coords);
         setSquareCanvasState((prev) => ({
           drawings: [...prev.drawings, [{ ...coords }]],
         }));
@@ -165,6 +192,14 @@ export default function CanvasComponent({
   const handleMouseMove = (e: React.MouseEvent) => {
     const coords = getCoordinates(e);
     if (!coords) return;
+    if (isDrawingLine) {
+      setLineCanvasState((prev) => {
+        const updatedDrawings = [...prev.drawings];
+        const lastDrawing = updatedDrawings[updatedDrawings.length - 1];
+        if (lastDrawing) lastDrawing.push({ ...coords });
+        return { ...prev, drawings: updatedDrawings };
+      });
+    }
     if (isTempDrawing) {
       // const coords = getCoordinates(e);
       // if (!coords) return;
@@ -234,6 +269,7 @@ export default function CanvasComponent({
     setIsPanning(false);
     setIsTempDrawing(false);
     setIsDrawingSquare(false);
+    setIsDrawingLine(false);
     await fadeOut();
   };
   const handleWheel = (e: React.WheelEvent) => {
@@ -312,6 +348,14 @@ export default function CanvasComponent({
           size={"icon"}
         >
           <Eraser />
+        </Button>
+        <Button
+          id="line"
+          onClick={handleBtnClick}
+          variant={activeBtn === "line" ? "default" : "ghost"}
+          size={"icon"}
+        >
+          <Minus />
         </Button>
         <Button
           id="disPencil"

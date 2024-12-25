@@ -1,4 +1,9 @@
-import { CanvasState, SquareCanvasState, TempCanvasState } from "@/lib/types";
+import {
+  CanvasState,
+  LineCanvasState,
+  SquareCanvasState,
+  TempCanvasState,
+} from "@/lib/types";
 
 export const drawCanvasState = (
   canvasState: CanvasState,
@@ -54,6 +59,26 @@ export const drawSquare = (
       drawing[0].y,
       drawing[drawing.length - 1].x - drawing[0].x,
       drawing[drawing.length - 1].y - drawing[0].y
+    );
+    context.lineCap = "round";
+    context.strokeStyle = "#e9ecef";
+    context.fillStyle = "#e9ecef";
+    context.lineWidth = 4;
+    context.stroke();
+  });
+};
+
+export const drawLine = (
+  lineCanvasState: LineCanvasState,
+  context: CanvasRenderingContext2D
+) => {
+  lineCanvasState.drawings.forEach((drawing) => {
+    if (!drawing[0]) return;
+    context.beginPath();
+    context.moveTo(drawing[0].x, drawing[0].y);
+    context.lineTo(
+      drawing[drawing.length - 1].x,
+      drawing[drawing.length - 1].y
     );
     context.lineCap = "round";
     context.strokeStyle = "#e9ecef";

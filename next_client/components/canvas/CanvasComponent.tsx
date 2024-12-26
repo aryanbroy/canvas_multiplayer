@@ -221,7 +221,7 @@ export default function CanvasComponent({
         const updatedDrawings = [...prev.drawings];
         let lastDrawing = updatedDrawings[updatedDrawings.length - 1];
         lastDrawing = [lastDrawing[0], coords];
-        console.log(updatedDrawings);
+        // console.log(updatedDrawings);
         updatedDrawings[updatedDrawings.length - 1] = lastDrawing;
         // if (lastDrawing) lastDrawing.push({ ...coords });
         return { ...prev, drawings: updatedDrawings };
@@ -300,7 +300,7 @@ export default function CanvasComponent({
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    console.log(arrowCanvasState.drawings);
+    // console.log(arrowCanvasState.drawings);
 
     setIsDrawing(false);
     setIsPanning(false);
@@ -334,7 +334,9 @@ export default function CanvasComponent({
     setCanvasState((prev) => ({ ...prev, drawings: [] }));
     setSquareCanvasState((prev) => ({ ...prev, drawings: [] }));
     setLineCanvasState((prev) => ({ ...prev, drawings: [] }));
+    setArrowCanvasState((prev) => ({ drawings: [] }));
   };
+
 
   const handleBtnClick = (e: any) => {
     const target = e.target as HTMLElement;

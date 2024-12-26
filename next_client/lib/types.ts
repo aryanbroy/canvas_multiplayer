@@ -16,3 +16,7 @@ export type SquareCanvasState = {
 export type LineCanvasState = {
   drawings: { x: number; y: number }[][];
 };
+
+export type ArrowCanvasState = {
+  drawings: { x: number; y: number }[][];
+};

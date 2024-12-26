@@ -1,4 +1,5 @@
 import {
+  ArrowCanvasState,
   CanvasState,
   LineCanvasState,
   SquareCanvasState,
@@ -85,5 +86,62 @@ export const drawLine = (
     context.fillStyle = "#e9ecef";
     context.lineWidth = 4;
     context.stroke();
+  });
+};
+
+export const drawArrow = (
+  arrowCanvasState: ArrowCanvasState,
+  context: CanvasRenderingContext2D
+) => {
+  arrowCanvasState.drawings.forEach((drawing) => {
+    if (!drawing[0]) return;
+    // console.log(drawing);
+    const fromX = drawing[0].x;
+    const fromY = drawing[0].y;
+
+    const arrowHeadLength = 20;
+
+    const toX = drawing[drawing.length - 1].x;
+    const toY = drawing[drawing.length - 1].y;
+
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+
+    // draw line
+    context.beginPath();
+    context.moveTo(fromX, fromY);
+    context.lineTo(toX, toY);
+    context.strokeStyle = "#e9ecef";
+    context.lineWidth = 4;
+    context.stroke();
+
+    // draw arrow head
+    context.beginPath();
+    context.moveTo(toX, toY);
+    context.lineTo(
+      toX - arrowHeadLength * Math.cos(angle - Math.PI / 6),
+      toY - arrowHeadLength * Math.sin(angle - Math.PI / 6)
+    );
+    context.lineTo(
+      toX - arrowHeadLength * Math.cos(angle + Math.PI / 6),
+      toY - arrowHeadLength * Math.sin(angle + Math.PI / 6)
+    );
+    // context.lineTo(toX, toY);
+    context.strokeStyle = "#e9ecef";
+    context.lineWidth = 4;
+    context.fillStyle = "#e9ecef";
+    context.fill();
+
+    // lmao this one is interesting
+    // if (drawing[drawing.length - 30]) {
+    //   context.lineTo(
+    //     drawing[drawing.length - 30].x + 10,
+    //     drawing[drawing.length - 30].y
+    //   );
+    // }
+    // context.lineCap = "round";
+    // context.strokeStyle = "#e9ecef";
+    // context.fillStyle = "#e9ecef";
+    // context.lineWidth = 4;
+    // context.stroke();
   });
 };

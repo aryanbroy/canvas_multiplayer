@@ -252,12 +252,14 @@ export default function CanvasComponent({
       });
     }
     if (isDrawing) {
-      // const coords = getCoordinates(e);
-      // if (!coords) return;
       setCanvasState((prev) => {
         const updatedDrawings = [...prev.drawings];
         const lastDrawing = updatedDrawings[updatedDrawings.length - 1];
-        lastDrawing.points.push(coords);
+        if (lastDrawing.type === "arrow") {
+          lastDrawing.points = [lastDrawing.points[0], coords];
+        } else {
+          lastDrawing.points.push(coords);
+        }
         return { ...prev, drawings: updatedDrawings };
       });
     }

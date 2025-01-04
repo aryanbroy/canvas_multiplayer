@@ -1,5 +1,4 @@
 import {
-  ArrowCanvasState,
   CanvasState,
   LineCanvasState,
   Point,
@@ -15,18 +14,21 @@ export const drawCanvasState = (
     if (!drawing.points[0]) return;
     if (drawing.type === "arrow") {
       drawArrow(drawing.points, context);
+    } else if (drawing.type === "line") {
+      drawLine(drawing.points, context);
+    } else if (drawing.type === "draw" || drawing.type === "erase") {
+      context.beginPath();
+      context.moveTo(drawing.points[0].x, drawing.points[0].y);
+      drawing.points.forEach((point) => {
+        if (!point) return;
+        context.lineTo(point.x, point.y);
+      });
+      context.lineCap = "round";
+      context.strokeStyle = drawing?.isEraser ? "#121212" : "#e9ecef";
+      context.fillStyle = drawing.isEraser ? "#121212" : "#e9ecef";
+      context.lineWidth = drawing.isEraser ? 15 : 4 * (1 / canvasState.scale);
+      context.stroke();
     }
-    context.beginPath();
-    context.moveTo(drawing.points[0].x, drawing.points[0].y);
-    drawing.points.forEach((point) => {
-      if (!point) return;
-      context.lineTo(point.x, point.y);
-    });
-    context.lineCap = "round";
-    context.strokeStyle = drawing?.isEraser ? "#121212" : "#e9ecef";
-    context.fillStyle = drawing.isEraser ? "#121212" : "#e9ecef";
-    context.lineWidth = drawing.isEraser ? 15 : 4 * (1 / canvasState.scale);
-    context.stroke();
   });
 };
 
@@ -74,23 +76,18 @@ export const drawSquare = (
 };
 
 export const drawLine = (
-  lineCanvasState: LineCanvasState,
+  drawing: Point[],
   context: CanvasRenderingContext2D
 ) => {
-  lineCanvasState.drawings.forEach((drawing) => {
-    if (!drawing[0]) return;
-    context.beginPath();
-    context.moveTo(drawing[0].x, drawing[0].y);
-    context.lineTo(
-      drawing[drawing.length - 1].x,
-      drawing[drawing.length - 1].y
-    );
-    context.lineCap = "round";
-    context.strokeStyle = "#e9ecef";
-    context.fillStyle = "#e9ecef";
-    context.lineWidth = 4;
-    context.stroke();
-  });
+  if (!drawing[0]) return;
+  context.beginPath();
+  context.moveTo(drawing[0].x, drawing[0].y);
+  context.lineTo(drawing[drawing.length - 1].x, drawing[drawing.length - 1].y);
+  context.lineCap = "round";
+  context.strokeStyle = "#e9ecef";
+  context.fillStyle = "#e9ecef";
+  context.lineWidth = 4;
+  context.stroke();
 };
 
 export const drawArrow = (

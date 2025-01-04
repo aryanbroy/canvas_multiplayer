@@ -1,5 +1,4 @@
 import {
-  ArrowCanvasState,
   CanvasState,
   LineCanvasState,
   SquareCanvasState,
@@ -17,7 +16,6 @@ import {
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  drawArrow,
   drawCanvasState,
   drawLine,
   drawSquare,
@@ -60,10 +58,6 @@ export default function CanvasComponent({
     drawings: [],
   });
   const [isDrawingLine, setIsDrawingLine] = useState(false);
-  const [isDrawingArrow, setIsDrawingArrow] = useState(false);
-  const [arrowCanvasState, setArrowCanvasState] = useState<ArrowCanvasState>({
-    drawings: [],
-  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -112,16 +106,10 @@ export default function CanvasComponent({
     drawSquare(squareCanvasState, context);
     context.restore();
 
-    context.save();
-    drawLine(lineCanvasState, context);
-    context.restore();
-  }, [
-    canvasState,
-    tempCanvasState,
-    squareCanvasState,
-    lineCanvasState,
-    arrowCanvasState,
-  ]);
+    // context.save();
+    // drawLine(lineCanvasState, context);
+    // context.restore();
+  }, [canvasState, tempCanvasState, squareCanvasState, lineCanvasState]);
 
   const getCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -145,12 +133,12 @@ export default function CanvasComponent({
     if (!coords) return;
 
     if (e.button === 0) {
-      if (activeBtn === "line") {
-        setIsDrawingLine(true);
-        setLineCanvasState((prev) => ({
-          drawings: [...prev.drawings, [{ ...coords }]],
-        }));
-      }
+      // if (activeBtn === "line") {
+      //   setIsDrawingLine(true);
+      //   setLineCanvasState((prev) => ({
+      //     drawings: [...prev.drawings, [{ ...coords }]],
+      //   }));
+      // }
 
       if (activeBtn === "square") {
         setIsDrawingSquare(true);
@@ -178,7 +166,8 @@ export default function CanvasComponent({
       if (
         activeBtn === "draw" ||
         activeBtn === "erase" ||
-        activeBtn === "arrow"
+        activeBtn === "arrow" ||
+        activeBtn === "line"
       ) {
         setIsDrawing(true);
 
@@ -294,7 +283,6 @@ export default function CanvasComponent({
     setIsTempDrawing(false);
     setIsDrawingSquare(false);
     setIsDrawingLine(false);
-    setIsDrawingArrow(false);
     await fadeOut();
   };
   const handleWheel = (e: React.WheelEvent) => {
@@ -321,9 +309,7 @@ export default function CanvasComponent({
     setCanvasState((prev) => ({ ...prev, drawings: [] }));
     setSquareCanvasState((prev) => ({ ...prev, drawings: [] }));
     setLineCanvasState((prev) => ({ ...prev, drawings: [] }));
-    setArrowCanvasState((prev) => ({ drawings: [] }));
   };
-
 
   const handleBtnClick = (e: any) => {
     const target = e.target as HTMLElement;

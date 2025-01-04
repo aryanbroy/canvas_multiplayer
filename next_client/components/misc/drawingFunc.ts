@@ -1,6 +1,5 @@
 import {
   CanvasState,
-  LineCanvasState,
   Point,
   SquareCanvasState,
   TempCanvasState,
@@ -28,6 +27,8 @@ export const drawCanvasState = (
       context.fillStyle = drawing.isEraser ? "#121212" : "#e9ecef";
       context.lineWidth = drawing.isEraser ? 15 : 4 * (1 / canvasState.scale);
       context.stroke();
+    } else if (drawing.type === "square") {
+      drawSquare(drawing.points, context);
     }
   });
 };
@@ -55,24 +56,21 @@ export const drawTempCanvasState = (
 };
 
 export const drawSquare = (
-  squareCanvasState: SquareCanvasState,
+  drawing: Point[],
   context: CanvasRenderingContext2D
 ) => {
-  squareCanvasState.drawings.forEach((drawing) => {
-    if (!drawing[0]) return;
-    context.beginPath();
-    context.rect(
-      drawing[0].x,
-      drawing[0].y,
-      drawing[drawing.length - 1].x - drawing[0].x,
-      drawing[drawing.length - 1].y - drawing[0].y
-    );
-    context.lineCap = "round";
-    context.strokeStyle = "#e9ecef";
-    context.fillStyle = "#e9ecef";
-    context.lineWidth = 4;
-    context.stroke();
-  });
+  context.beginPath();
+  context.rect(
+    drawing[0].x,
+    drawing[0].y,
+    drawing[drawing.length - 1].x - drawing[0].x,
+    drawing[drawing.length - 1].y - drawing[0].y
+  );
+  context.lineCap = "round";
+  context.strokeStyle = "#e9ecef";
+  context.fillStyle = "#e9ecef";
+  context.lineWidth = 4;
+  context.stroke();
 };
 
 export const drawLine = (

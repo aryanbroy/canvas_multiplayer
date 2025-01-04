@@ -35,7 +35,3 @@ export type SquareCanvasState = {
   drawings: { x: number; y: number }[][];
   offset: { x: number; y: number };
 };
-
-export type LineCanvasState = {
-  drawings: { x: number; y: number }[][];
-};

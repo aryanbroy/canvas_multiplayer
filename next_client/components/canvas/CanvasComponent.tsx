@@ -53,6 +53,7 @@ export default function CanvasComponent({
   const [squareCanvasState, setSquareCanvasState] = useState<SquareCanvasState>(
     {
       drawings: [],
+      offset: { x: 0, y: 0 },
     }
   );
   const [lineCanvasState, setLineCanvasState] = useState<LineCanvasState>({
@@ -115,9 +116,9 @@ export default function CanvasComponent({
     drawLine(lineCanvasState, context);
     context.restore();
 
-    context.save();
-    drawArrow(arrowCanvasState, context);
-    context.restore();
+    // context.save();
+    // drawArrow(arrowCanvasState, context);
+    // context.restore();
   }, [
     canvasState,
     tempCanvasState,
@@ -148,13 +149,13 @@ export default function CanvasComponent({
     if (!coords) return;
 
     if (e.button === 0) {
-      if (activeBtn === "arrow") {
-        // console.log("drawing arrow");
-        setIsDrawingArrow(true);
-        setArrowCanvasState((prev) => ({
-          drawings: [...prev.drawings, [{ ...coords }]],
-        }));
-      }
+      // if (activeBtn === "arrow") {
+      //   // console.log("drawing arrow");
+      //   setIsDrawingArrow(true);
+      //   setArrowCanvasState((prev) => ({
+      //     drawings: [...prev.drawings, [{ ...coords }]],
+      //   }));
+      // }
       if (activeBtn === "line") {
         setIsDrawingLine(true);
         setLineCanvasState((prev) => ({
@@ -170,6 +171,7 @@ export default function CanvasComponent({
       if (activeBtn === "square") {
         setIsDrawingSquare(true);
         setSquareCanvasState((prev) => ({
+          ...prev,
           drawings: [...prev.drawings, [{ ...coords }]],
         }));
       }
@@ -190,18 +192,22 @@ export default function CanvasComponent({
         }));
         return;
       }
-      if (activeBtn === "draw" || activeBtn === "erase") {
+      if (
+        activeBtn === "draw" ||
+        activeBtn === "erase" ||
+        activeBtn === "arrow"
+      ) {
         setIsDrawing(true);
+
         setCanvasState((prev) => ({
           ...prev,
           drawings: [
             ...prev.drawings,
-            [
-              {
-                ...coords,
-                isEraser: activeBtn === "erase",
-              },
-            ],
+            {
+              points: [coords],
+              isEraser: activeBtn === "erase",
+              type: activeBtn,
+            },
           ],
         }));
       }
@@ -216,17 +222,17 @@ export default function CanvasComponent({
   const handleMouseMove = (e: React.MouseEvent) => {
     const coords = getCoordinates(e);
     if (!coords) return;
-    if (isDrawingArrow) {
-      setArrowCanvasState((prev) => {
-        const updatedDrawings = [...prev.drawings];
-        let lastDrawing = updatedDrawings[updatedDrawings.length - 1];
-        lastDrawing = [lastDrawing[0], coords];
-        // console.log(updatedDrawings);
-        updatedDrawings[updatedDrawings.length - 1] = lastDrawing;
-        // if (lastDrawing) lastDrawing.push({ ...coords });
-        return { ...prev, drawings: updatedDrawings };
-      });
-    }
+    // if (isDrawingArrow) {
+    //   setArrowCanvasState((prev) => {
+    //     const updatedDrawings = [...prev.drawings];
+    //     let lastDrawing = updatedDrawings[updatedDrawings.length - 1];
+    //     lastDrawing = [lastDrawing[0], coords];
+    //     // console.log(updatedDrawings);
+    //     updatedDrawings[updatedDrawings.length - 1] = lastDrawing;
+    //     // if (lastDrawing) lastDrawing.push({ ...coords });
+    //     return { ...prev, drawings: updatedDrawings };
+    //   });
+    // }
     if (isDrawingLine) {
       setLineCanvasState((prev) => {
         const updatedDrawings = [...prev.drawings];
@@ -251,7 +257,7 @@ export default function CanvasComponent({
       setCanvasState((prev) => {
         const updatedDrawings = [...prev.drawings];
         const lastDrawing = updatedDrawings[updatedDrawings.length - 1];
-        lastDrawing.push({ ...coords, isEraser: activeBtn === "erase" });
+        lastDrawing.points.push(coords);
         return { ...prev, drawings: updatedDrawings };
       });
     }
@@ -265,6 +271,15 @@ export default function CanvasComponent({
           y: prev.offset.y + deltaY,
         },
       }));
+
+      setSquareCanvasState((prev) => ({
+        ...prev,
+        offset: {
+          x: prev.offset.x + deltaX,
+          y: prev.offset.y + deltaY,
+        },
+      }));
+
       setLastPosition({ x: e.clientX, y: e.clientY });
     }
     if (isDrawingSquare) {
@@ -300,7 +315,7 @@ export default function CanvasComponent({
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    // console.log(arrowCanvasState.drawings);
+    console.log(canvasState);
 
     setIsDrawing(false);
     setIsPanning(false);

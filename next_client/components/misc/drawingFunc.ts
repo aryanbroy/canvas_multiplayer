@@ -11,17 +11,17 @@ export const drawCanvasState = (
   context: CanvasRenderingContext2D
 ) => {
   canvasState.drawings.forEach((drawing) => {
-    if (!drawing[0]) return;
+    if (!drawing.points[0]) return;
     context.beginPath();
-    context.moveTo(drawing[0].x, drawing[0].y);
-    drawing.forEach((point) => {
+    context.moveTo(drawing.points[0].x, drawing.points[0].y);
+    drawing.points.forEach((point) => {
       if (!point) return;
       context.lineTo(point.x, point.y);
     });
     context.lineCap = "round";
-    context.strokeStyle = drawing[0]?.isEraser ? "#121212" : "#e9ecef";
-    context.fillStyle = drawing[0].isEraser ? "#121212" : "#e9ecef";
-    context.lineWidth = drawing[0].isEraser ? 15 : 4 * (1 / canvasState.scale);
+    context.strokeStyle = drawing?.isEraser ? "#121212" : "#e9ecef";
+    context.fillStyle = drawing.isEraser ? "#121212" : "#e9ecef";
+    context.lineWidth = drawing.isEraser ? 15 : 4 * (1 / canvasState.scale);
     context.stroke();
   });
 };

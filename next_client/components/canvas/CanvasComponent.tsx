@@ -115,10 +115,6 @@ export default function CanvasComponent({
     context.save();
     drawLine(lineCanvasState, context);
     context.restore();
-
-    // context.save();
-    // drawArrow(arrowCanvasState, context);
-    // context.restore();
   }, [
     canvasState,
     tempCanvasState,
@@ -149,23 +145,11 @@ export default function CanvasComponent({
     if (!coords) return;
 
     if (e.button === 0) {
-      // if (activeBtn === "arrow") {
-      //   // console.log("drawing arrow");
-      //   setIsDrawingArrow(true);
-      //   setArrowCanvasState((prev) => ({
-      //     drawings: [...prev.drawings, [{ ...coords }]],
-      //   }));
-      // }
       if (activeBtn === "line") {
         setIsDrawingLine(true);
         setLineCanvasState((prev) => ({
           drawings: [...prev.drawings, [{ ...coords }]],
         }));
-        // the below code is basically the same but a little useless to add that "...prev"
-        // setLineCanvasState((prev) => ({
-        //   ...prev,
-        //   drawings: [...prev.drawings, [{ ...coords }]],
-        // }));
       }
 
       if (activeBtn === "square") {
@@ -176,7 +160,6 @@ export default function CanvasComponent({
         }));
       }
       if (activeBtn === "disPencil") {
-        // console.log("Dissapear pencil");
         setIsTempDrawing(true);
         setTempCanvasState((prev) => ({
           ...prev,
@@ -222,17 +205,6 @@ export default function CanvasComponent({
   const handleMouseMove = (e: React.MouseEvent) => {
     const coords = getCoordinates(e);
     if (!coords) return;
-    // if (isDrawingArrow) {
-    //   setArrowCanvasState((prev) => {
-    //     const updatedDrawings = [...prev.drawings];
-    //     let lastDrawing = updatedDrawings[updatedDrawings.length - 1];
-    //     lastDrawing = [lastDrawing[0], coords];
-    //     // console.log(updatedDrawings);
-    //     updatedDrawings[updatedDrawings.length - 1] = lastDrawing;
-    //     // if (lastDrawing) lastDrawing.push({ ...coords });
-    //     return { ...prev, drawings: updatedDrawings };
-    //   });
-    // }
     if (isDrawingLine) {
       setLineCanvasState((prev) => {
         const updatedDrawings = [...prev.drawings];
@@ -242,8 +214,6 @@ export default function CanvasComponent({
       });
     }
     if (isTempDrawing) {
-      // const coords = getCoordinates(e);
-      // if (!coords) return;
       setTempCanvasState((prev) => {
         const updatedDrawings = [...prev.drawings];
         const lastDrawing = updatedDrawings[updatedDrawings.length - 1];
